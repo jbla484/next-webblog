@@ -33,6 +33,7 @@ const generateAccessToken = (email) => {
 
 export const userLogin = async (req, res) => {
     const { email, password } = req.body;
+    console.log('login');
 
     try {
         // check if user already exists and return error if they do

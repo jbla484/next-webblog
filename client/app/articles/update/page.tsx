@@ -13,12 +13,13 @@ export default function Login() {
     let [title, setTitle] = useState<string>('');
     let [description, setDescription] = useState<string>('');
     let [image, setImage] = useState<string>('');
-    let [category, setCategory] = useState<string>('tech');
+    let [category, setCategory] = useState<string>('');
 
     let [error, setError] = useState<string>('');
 
-    const queryCreateArticle = async () => {
+    const queryUpdateArticle = async () => {
         try {
+            console.log(title, description, image, category);
             const query = await fetch('http://localhost:3001/articles/create', {
                 method: 'POST',
                 body: JSON.stringify({ title, description, image, category }),
@@ -28,11 +29,14 @@ export default function Login() {
                 },
             });
             const response = await query.json();
-            if (!response.error) {
-                push('/');
-            } else {
-                setError(response.error);
-            }
+            // if (!response.error) {
+            //     // Store token in local storage
+            //     localStorage.setItem('token', response.token);
+            //     setError('');
+            //     push('/');
+            // } else {
+            //     setError(response.error);
+            // }
         } catch (error) {
             console.error(error);
         }
@@ -74,29 +78,12 @@ export default function Login() {
                     setter={setImage}
                 ></Input>
 
-                <label
-                    htmlFor={'categories'}
-                    className='block w-full text-left ml-2 text-gray-500'
-                >
-                    Category
-                </label>
-                <select
-                    className='border-solid border-2 bg-transparent rounded-md p-2 my-2 block w-full'
-                    name={'categories'}
-                    onChange={(e) => {
-                        setCategory(e.target.value);
-                    }}
-                >
-                    <option value={'tech'}>Tech</option>
-                    <option value={'food'}>Food</option>
-                    <option value={'entertainment'}>Entertainment</option>
-                    <option value={'health'}>Health</option>
-                    <option value={'money'}>Money</option>
-                    <option value={'home & garden'}>Home & Garden</option>
-                    <option value={'relationships'}>Relationships</option>
-                    <option value={'deals'}>Deals</option>
-                    <option value={'hacks'}>Hacks</option>
-                </select>
+                <Input
+                    type='text'
+                    placeholder='Category'
+                    value={category}
+                    setter={setCategory}
+                ></Input>
 
                 {error !== '' && (
                     <div className='border-solid border-2 bg-transparent rounded-md p-2 border-red-600 bg-red-300'>
@@ -109,7 +96,7 @@ export default function Login() {
                 <div className='mt-2'>
                     <button
                         className='py-1.5 px-2 rounded-md bg-green-600 text-white w-full block'
-                        onClick={queryCreateArticle}
+                        onClick={queryUpdateArticle}
                     >
                         Create
                     </button>

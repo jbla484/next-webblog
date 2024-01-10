@@ -7,6 +7,11 @@ const ArticleSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    authorid: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'user',
+        required: true,
+    },
     image: {
         // type: Buffer,
         type: String,
