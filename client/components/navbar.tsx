@@ -51,15 +51,9 @@ export default function Navbar() {
     };
 
     return (
-        <nav className='flex flex-row w-11/12 h-12 justify-end items-center fixed bg-white'>
-            <MdSignpost
-                size={30}
-                className='cursor-pointer text-green-600'
-            />
-            <Link
-                href='/'
-                className='mr-auto ml-1 text-green-600 text-xl'
-            >
+        <nav className='flex flex-row w-11/12 h-12 justify-end items-center fixed bg-white top-0'>
+            <MdSignpost size={30} className='cursor-pointer text-green-600' />
+            <Link href='/' className='mr-auto ml-1 text-green-600 text-xl'>
                 <b>WebBlog</b>
             </Link>
 
@@ -94,16 +88,10 @@ export default function Navbar() {
                 </div>
             ) : (
                 <>
-                    <Link
-                        href='/login'
-                        className='py-1.5 px-2 '
-                    >
+                    <Link href='/login' className='py-1.5 px-2 '>
                         Login
                     </Link>
-                    <Link
-                        href='/register'
-                        className='py-1.5 px-2 '
-                    >
+                    <Link href='/register' className='py-1.5 px-2 '>
                         Register
                     </Link>
                 </>
