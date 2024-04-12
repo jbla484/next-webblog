@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 import { validateEmail, validatePassword } from '@/utils/utils';
@@ -13,17 +13,20 @@ import { FaFacebookF } from 'react-icons/fa';
 import { FaGithub } from 'react-icons/fa';
 import { FaLinkedinIn } from 'react-icons/fa';
 
+import { UserContext } from '@/components/UserContext';
+
 export default function Login() {
     const { push } = useRouter();
 
     let [email, setEmail] = useState<string>('');
     let [password, setPassword] = useState<string>('');
-
     let [error, setError] = useState<string>('');
+
+    const { userLoggedIn, setUserLoggedIn } = useContext(UserContext);
 
     const queryLogin = async () => {
         try {
-            const query = await fetch('http://localhost:3001/login', {
+            const query = await fetch('http://192.168.1.28:3001/login', {
                 method: 'POST',
                 body: JSON.stringify({ email, password }),
                 headers: { 'Content-Type': 'application/json' },
@@ -31,8 +34,16 @@ export default function Login() {
 
             const response = await query.json();
             if (!response.error) {
-                // Store token in local storage
-                localStorage.setItem('token', response.token);
+                // set logged in state for navbar change
+                setUserLoggedIn(true);
+
+                console.log(response);
+
+                // Store author id and token in session storage
+                sessionStorage.setItem('token', response.token);
+                sessionStorage.setItem('authorid', response.authorid);
+
+                // clear error and navigate
                 setError('');
                 push('/');
             } else {

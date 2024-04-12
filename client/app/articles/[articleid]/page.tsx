@@ -1,13 +1,36 @@
 'use client';
 
+import Input from '@/components/input';
 import { categoryIcon } from '@/utils/utils';
-import React, { useEffect, useState } from 'react';
+import Link from 'next/link';
+import React, { useContext, useEffect, useState } from 'react';
 import { IoHardwareChipOutline } from 'react-icons/io5';
 import { IoPersonOutline } from 'react-icons/io5';
 import { IoCalendarOutline } from 'react-icons/io5';
 
+import { MdFavoriteBorder } from 'react-icons/md';
+import { MdFavorite } from 'react-icons/md';
+
+import { UserContext } from '@/components/UserContext';
+
+import { v4 as uuidv4 } from 'uuid';
+
+// Unable to figure out if user has favorited article on load due to the favorite being on the user object, not the article.
+// we can query the backend to check
+
 interface Params {
     articleid: string;
+}
+
+interface Comment {
+    author: string;
+    authorid: string;
+    description: string;
+    created: Date;
+}
+
+interface Likes {
+    author: string;
 }
 
 interface Article {
@@ -16,14 +39,35 @@ interface Article {
     author: string;
     created: Date;
     description: string;
-    likes: [];
-    comments: [];
+    likes: Likes[];
+    comments: Comment[];
     category: string;
+}
+
+interface Articles {
+    articleid: string;
+}
+
+interface Favorites {
+    articleid: string;
+}
+
+interface Author {
+    articles: Articles[];
+    avatar: string;
+    created: Date;
+    email: string;
+    favorites: Favorites[];
+    fullname: string;
 }
 
 // TODO: why are we getting an error here>?
 export default function Article({ params }: { params: Params }) {
     const { articleid } = params;
+
+    const [favorited, setFavorited] = useState<boolean>(false);
+
+    const [gotUser, setGotUser] = useState<boolean>(false);
 
     const [article, setArticle] = useState<Article>({
         image: '',
@@ -36,12 +80,92 @@ export default function Article({ params }: { params: Params }) {
         category: '',
     });
 
+    const [author, setAuthor] = useState<Author>({
+        articles: [],
+        avatar: '',
+        created: new Date(),
+        email: '',
+        favorites: [],
+        fullname: '',
+    });
+
+    const [comment, setComment] = useState<string>('');
+
+    // TODO: get users gravatar
+    async function addComment() {
+        const query = await fetch(
+            'http://192.168.1.28:3001/articles/comments/add',
+            {
+                method: 'POST',
+                body: JSON.stringify({ articleid, description: comment }),
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        const response = await query.json();
+        console.log(response);
+
+        // TODO: update comments on response if no error
+    }
+
+    async function favoriteArticle() {
+        console.log(`favorited article with id ${articleid}`);
+        const query = await fetch(
+            'http://192.168.1.28:3001/articles/favorite',
+            {
+                method: 'POST',
+                body: JSON.stringify({
+                    articleid,
+                }),
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        const response = await query.json();
+        console.log(response);
+        if (!response.error) {
+            setFavorited(true);
+        } else {
+            // setError(response.error);
+        }
+    }
+
+    async function unfavoriteArticle() {
+        // TODO: needs backend functionality
+        console.log('unfavorite article with id ' + articleid);
+
+        const query = await fetch(
+            'http://192.168.1.28:3001/articles/unfavorite',
+            {
+                method: 'POST',
+                body: JSON.stringify({
+                    articleid,
+                }),
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        const response = await query.json();
+        console.log(response);
+        if (!response.error) {
+            setFavorited(false);
+        } else {
+            // setError(response.error);
+        }
+    }
+
     // get article info
     useEffect(() => {
         const getArticle = async () => {
             try {
                 const query = await fetch(
-                    `http://localhost:3001/articles/${articleid}`
+                    `http://192.168.1.28:3001/articles/${articleid}`
                 );
                 const response = await query.json();
                 setArticle(response[0]);
@@ -50,45 +174,209 @@ export default function Article({ params }: { params: Params }) {
             }
         };
         getArticle();
+
+        const getUserInfo = async () => {
+            const query = await fetch(
+                `http://192.168.1.28:3001/authors/${sessionStorage.getItem(
+                    'authorid'
+                )}`
+            );
+
+            const response = await query.json();
+            if (!response.error) {
+                setGotUser(true);
+                setAuthor(response[0]);
+            }
+        };
+        getUserInfo();
     }, [articleid]);
 
     // render article info
     return (
-        <div className='flex flex-col justify-center text-left min-h-screen'>
-            <img
-                src={article.image}
-                width={1000}
-                height={1000}
-                alt='blog post'
-                className='mt-20'
-            />
-            <div className='flex flex-row text-green-500 my-2'>
-                {categoryIcon(article.category)}
-                <p className='text-sm'>{article.category.toUpperCase()}</p>
+        <>
+            <div className='mt-16 flex'>
+                <div className='flex flex-grow text-sm'>
+                    <Link href='/'>Home</Link>
+                    <p className='mx-2'>&#x2192;</p>
+                    <Link href='/articles/categories'>Categories</Link>
+                    <p className='mx-2'>&#x2192;</p>
+                    <Link
+                        href='/articles/categories/tech'
+                        className='text-green-600'
+                    >
+                        {article.category.charAt(0).toUpperCase() +
+                            article.category.slice(1)}
+                    </Link>
+                </div>
+
+                {/* TODO: allow user to favorite article, show appropriate icon */}
             </div>
-
-            <h1 className='text-xl mt-1'>
-                <b>{article.title}</b>
-            </h1>
-            <div className='flex flex-row text-gray-700 my-2'>
-                <IoPersonOutline
-                    size={22}
-                    className='mr-1'
+            <div className='flex flex-col justify-center text-left mt-4'>
+                <img
+                    src={article.image}
+                    width={1000}
+                    height={1000}
+                    alt='blog post'
+                    className='rounded-md mt-2'
                 />
-                <p className=' text-sm'>{article.author}</p>
 
-                <IoCalendarOutline
-                    size={22}
-                    className='mr-2 ml-4'
-                />
-                <p className='text-sm'>
-                    {new Date(article.created).toLocaleDateString()}
-                </p>
+                <div className='flex flex-row text-gray-700 my-4'>
+                    <IoPersonOutline
+                        size={22}
+                        className='mr-1'
+                    />
+                    <p className=' text-sm'>{article.author}</p>
+
+                    <IoCalendarOutline
+                        size={22}
+                        className='mr-2 ml-4'
+                    />
+                    <p className='text-sm flex-grow'>
+                        {new Date(article.created).toLocaleDateString()}
+                    </p>
+
+                    <div className='flex text-green-500'>
+                        {favorited ? (
+                            <MdFavorite
+                                size={22}
+                                onClick={unfavoriteArticle}
+                            />
+                        ) : (
+                            <MdFavoriteBorder
+                                size={22}
+                                onClick={favoriteArticle}
+                            />
+                        )}
+                    </div>
+                </div>
+                <hr className='mb-4'></hr>
+
+                <h1 className='text-3xl'>
+                    <b>{article.title}</b>
+                </h1>
+                <p className='text-xl mt-2'>{article.description}</p>
+
+                <div className='flex items-center mt-4 mb-2'>
+                    <h1 className='text-2xl font-bold'>Conversation</h1>
+                    <p className='pl-2'>
+                        {article.comments.length}{' '}
+                        {article.comments.length > 1 ||
+                        article.comments.length == 0
+                            ? 'Comments'
+                            : 'Comment'}
+                    </p>
+                </div>
+                <hr></hr>
+
+                <div className='mt-2 text-sm flex'>
+                    <p className='flex-grow'>
+                        Commenting as{' '}
+                        <b>{gotUser ? author.fullname : 'Guest'}</b>
+                    </p>
+                    {gotUser ? (
+                        <></>
+                    ) : (
+                        <div className='flex gap-1'>
+                            <Link href='/login'>Log In</Link>
+                            <div className='text-gray-300'>|</div>
+                            <Link href='/register'>Sign Up</Link>
+                        </div>
+                    )}
+                </div>
+
+                <div className='flex'>
+                    <img
+                        src={
+                            gotUser
+                                ? author.avatar
+                                : '//www.gravatar.com/avatar/1a7a0374cbdeb7c365ef0737c028d8d8?s=200&r=pg&d=mm'
+                        }
+                        width={40}
+                        height={40}
+                        alt='gravatar image'
+                        className='my-2 rounded-full mr-2'
+                    />
+                    <input
+                        type='text'
+                        placeholder='What do you think?'
+                        className='border-solid border-2 bg-transparent rounded-md p-2 my-2 block w-full'
+                        onChange={(e) => {
+                            setComment(e.target.value);
+                        }}
+                        value={comment}
+                    ></input>
+                </div>
+
+                {comment && (
+                    <div className='align text-right'>
+                        <button
+                            className='bg-green-600 text-white px-4 py-1 rounded-md'
+                            onClick={addComment}
+                        >
+                            Post
+                        </button>
+                    </div>
+                )}
+
+                <div className='mb-2'>
+                    <p>
+                        Sort by{' '}
+                        <b>
+                            <select>
+                                <option value='best'>Best</option>
+                                <option value='newest'>Newest</option>
+                                <option value='oldest'>Oldest</option>
+                            </select>
+                        </b>
+                    </p>
+                </div>
+
+                {/* TODO: update user name, date, and profile picture and reply to profiles comment */}
+                <div>
+                    {article.comments.map((comment: Comment, i: number) => {
+                        console.log(comment.authorid);
+                        return (
+                            <div key={uuidv4()}>
+                                <div
+                                    key={i}
+                                    className='flex'
+                                >
+                                    <div className='inline-block flex align-middle'>
+                                        <img
+                                            src={comment.avatar}
+                                            width={40}
+                                            height={40}
+                                            alt='gravatar image'
+                                            className='my-2 rounded-full'
+                                        />
+                                    </div>
+                                    <div className='inline-block'>
+                                        <div>
+                                            <b>{comment.author}</b>
+                                        </div>
+                                        <div className='text-sm text-gray-500'>
+                                            {new Date(
+                                                article.created
+                                            ).toLocaleDateString()}
+                                        </div>
+                                        <div>{comment.description}</div>
+                                        <button
+                                            type='button'
+                                            className='text-sm text-gray-500'
+                                        >
+                                            Reply
+                                        </button>
+                                    </div>
+                                </div>
+                                <hr className='my-2'></hr>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* <p className='text-xl mt-1'>Likes: {article.likes}</p> */}
+                {/* <p className='text-xl mt-1'>Comments: {article.comments}</p> */}
             </div>
-
-            <p className='text-xl mt-1'>{article.description}</p>
-            <p className='text-xl mt-1'>Likes: {article.likes}</p>
-            <p className='text-xl mt-1'>Comments: {article.comments}</p>
-        </div>
+        </>
     );
 }

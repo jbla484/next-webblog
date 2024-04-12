@@ -41,7 +41,7 @@ export default function Article(article: Article) {
                             height={1000}
                             alt='blog post'
                             className='rounded-md'
-                            onClick={(e) => {
+                            onClick={() => {
                                 push(`/articles/${article.id}`);
                             }}
                         />
@@ -71,7 +71,7 @@ export default function Article(article: Article) {
                         <div
                             className='flex flex-row text-gray-700 mt-1 text-xs'
                             onClick={(e) => {
-                                push(`/users/${article.authorid}`);
+                                push(`/authors/${article.authorid}`);
                             }}
                         >
                             <IoPersonOutline
@@ -112,7 +112,7 @@ export default function Article(article: Article) {
                             <div
                                 className='flex flex-row text-gray-700 mt-1 text-xs'
                                 onClick={(e) => {
-                                    push(`/users/${article.authorid}`);
+                                    push(`/authors/${article.authorid}`);
                                 }}
                             >
                                 <IoCalendarOutline
@@ -137,6 +137,63 @@ export default function Article(article: Article) {
                             }}
                         />
                     </div>
+                );
+            case 'category':
+                return (
+                    <>
+                        <img
+                            src={article.img}
+                            width={1000}
+                            height={1000}
+                            alt='blog post'
+                            className='mt-4'
+                            onClick={(e) => {
+                                push(`/articles/${article.id}`);
+                            }}
+                        />
+                        <div
+                            className='flex flex-row text-green-500 mt-2'
+                            onClick={(e) => {
+                                push(
+                                    `/articles/categories/${article.category}`
+                                );
+                            }}
+                        >
+                            {categoryIcon(article.category)}
+                            <p className='text-sm'>
+                                {article.category.toUpperCase()}
+                            </p>
+                        </div>
+
+                        <h1
+                            className='text-xl mt-1'
+                            onClick={(e) => {
+                                push(`/articles/${article.id}`);
+                            }}
+                        >
+                            <b>{article.title}</b>
+                        </h1>
+                        <div
+                            className='flex flex-row text-gray-700 my-2'
+                            onClick={() => {
+                                push(`/authors/${article.authorid}`);
+                            }}
+                        >
+                            <IoPersonOutline
+                                size={22}
+                                className='mr-1'
+                            />
+                            <p className=' text-sm'>{article.author}</p>
+
+                            <IoCalendarOutline
+                                size={22}
+                                className='mr-2 ml-4'
+                            />
+                            <p className='text-sm'>
+                                {new Date(article.created).toLocaleDateString()}
+                            </p>
+                        </div>
+                    </>
                 );
         }
     };

@@ -5,7 +5,7 @@
    1.1.3 [x] Post request
    1.1.4 [x] Json web token
    1.1.5 [] Social logins
-   1.1.6 [] Redirect to homepage
+   1.1.6 [x] Redirect to homepage
    1.1.7 [x] Error handling
    1.1.8 [x] Error messages
    1.2 [x] Registration page

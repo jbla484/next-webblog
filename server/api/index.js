@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import articlesRouter from './routes/articles.js';
+import authorsRouter from './routes/authors.js';
 
 import { userLogin, userRegister } from './controllers/auth.js';
 import { connectToDatabase } from './database.js';
@@ -16,6 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use('/articles', articlesRouter);
+app.use('/authors', authorsRouter);
 
 // TODO: query database to get featured content
 app.get('/', (req, res) => {
@@ -31,7 +33,7 @@ app.post('/verify', authenticateToken, (req, res) => {
 });
 
 app.listen(port, () => {
-    console.log(`[server]: Server is running at http://localhost:${port}`);
+    console.log(`[server]: Server is running at http://192.168.1.28:${port}`);
 });
 
 connectToDatabase();

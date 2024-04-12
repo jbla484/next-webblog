@@ -2,19 +2,26 @@
 
 import { categoryIcon } from '@/utils/utils';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { IoHardwareChipOutline } from 'react-icons/io5';
 import { IoPersonOutline } from 'react-icons/io5';
 import { IoCalendarOutline } from 'react-icons/io5';
+
+import Article from '../../../../components/Article';
+
+// TODO: we need to move this into the article component???
 
 interface Params {
     category: string;
 }
 
 interface Article {
+    _id: string;
     image: string;
     title: string;
     author: string;
+    authorid: string;
     created: Date;
     description: string;
     likes: [];
@@ -23,15 +30,17 @@ interface Article {
 }
 
 export default function Categories({ params }: { params: Params }) {
+    const { push } = useRouter();
     const { category } = params;
     const [articles, setArticles] = useState([]);
+    console.log(category);
 
     useEffect(() => {
         const getArticles = async () => {
             try {
                 // query the backend to get the articles with the provided category
                 const query = await fetch(
-                    `http://localhost:3001/articles/categories/${category}`
+                    `http://192.168.1.28:3001/articles/categories/${category}`
                 );
                 const response = await query.json();
                 setArticles(response);
@@ -46,7 +55,6 @@ export default function Categories({ params }: { params: Params }) {
 
     // render articles info
     return (
-        // creates issue with navbar
         <div className='mt-16'>
             <div className='flex'>
                 <Link href='/'>Home</Link>
@@ -67,37 +75,19 @@ export default function Categories({ params }: { params: Params }) {
                             key={article.description}
                             className='flex flex-col justify-center text-left'
                         >
-                            <img
-                                src={article.image}
-                                width={1000}
-                                height={1000}
-                                alt='blog post'
-                                className='mt-4'
+                            <Article
+                                id={article._id}
+                                img={article.image}
+                                title={article.title}
+                                author={article.author}
+                                authorid={article.authorid}
+                                description={article.description}
+                                category={article.category}
+                                comments={article.comments}
+                                likes={article.likes}
+                                created={article.created}
+                                section='category'
                             />
-                            <div className='flex flex-row text-green-500 mt-2'>
-                                {categoryIcon(article.category)}
-                                <p className='text-sm'>
-                                    {article.category.toUpperCase()}
-                                </p>
-                            </div>
-
-                            <h1 className='text-xl mt-1'>
-                                <b>{article.title}</b>
-                            </h1>
-                            <div className='flex flex-row text-gray-700 my-2'>
-                                <IoPersonOutline size={22} className='mr-1' />
-                                <p className=' text-sm'>{article.author}</p>
-
-                                <IoCalendarOutline
-                                    size={22}
-                                    className='mr-2 ml-4'
-                                />
-                                <p className='text-sm'>
-                                    {new Date(
-                                        article.created
-                                    ).toLocaleDateString()}
-                                </p>
-                            </div>
                         </div>
                     );
                 })}

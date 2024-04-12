@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useContext } from 'react';
 import Link from 'next/link';
 
 import Search from './search';
@@ -16,21 +16,20 @@ import { MdNotificationsActive } from 'react-icons/md';
 import { MdOutlineArticle } from 'react-icons/md';
 import { MdSignpost } from 'react-icons/md';
 
+import { UserContext } from './UserContext';
+
 export default function Navbar() {
     const { push } = useRouter();
 
     let [searchBarVisible, setSearchBarVisible] = useState(false);
-
-    // move to home component
-    let [userLoggedIn, setUserLoggedIn] = useState(false);
+    const { userLoggedIn, setUserLoggedIn } = useContext(UserContext);
 
     useEffect(() => {
-        // TODO: create a popup when token expires
         let verifyToken = async () => {
-            const query = await fetch('http://localhost:3001/verify', {
+            const query = await fetch('http://192.168.1.28:3001/verify', {
                 method: 'POST',
                 headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`,
                     'Content-Type': 'application/json',
                 },
             });
@@ -39,21 +38,32 @@ export default function Navbar() {
                 setUserLoggedIn(true);
             } else {
                 console.log('user login expired');
-                // TODO: tell the user their login timed out and ask them to login again?
+                // TODO: create a popup when token expires, on whatever page the user is on?
+                // TODO: tell the user their login timed out and ask them to login again? modal?
                 setUserLoggedIn(false);
             }
         };
         verifyToken();
     }, []);
 
-    let toggleSearchVisibility = () => {
+    const toggleSearchVisibility = () => {
         setSearchBarVisible(!searchBarVisible);
+    };
+
+    const navigateToAuthor = () => {
+        push(`/authors/${sessionStorage.getItem('authorid')}`);
     };
 
     return (
         <nav className='flex flex-row w-11/12 h-12 justify-end items-center fixed bg-white top-0'>
-            <MdSignpost size={30} className='cursor-pointer text-green-600' />
-            <Link href='/' className='mr-auto ml-1 text-green-600 text-xl'>
+            <MdSignpost
+                size={30}
+                className='cursor-pointer text-green-600'
+            />
+            <Link
+                href='/'
+                className='mr-auto ml-1 text-green-600 text-xl'
+            >
                 <b>WebBlog</b>
             </Link>
 
@@ -84,14 +94,21 @@ export default function Navbar() {
                     <MdAccountCircle
                         size={30}
                         className='ml-4 cursor-pointer'
+                        onClick={navigateToAuthor}
                     />
                 </div>
             ) : (
                 <>
-                    <Link href='/login' className='py-1.5 px-2 '>
+                    <Link
+                        href='/login'
+                        className='py-1.5 px-2 '
+                    >
                         Login
                     </Link>
-                    <Link href='/register' className='py-1.5 px-2 '>
+                    <Link
+                        href='/register'
+                        className='py-1.5 px-2 '
+                    >
                         Register
                     </Link>
                 </>

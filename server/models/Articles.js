@@ -29,22 +29,30 @@ const ArticleSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    likes: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'like',
-        },
-    ],
-    comments: [
-        {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'comment',
-        },
-    ],
     created: {
         type: Date,
         default: new Date(),
     },
+    comments: [
+        {
+            author: {
+                type: String,
+                // required: true,
+            },
+            authorid: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'user',
+            },
+            description: {
+                type: String,
+                required: true,
+            },
+            created: {
+                type: Date,
+                default: new Date(),
+            },
+        },
+    ],
 });
 
 // Create a model out of the schema (will automatically be created)

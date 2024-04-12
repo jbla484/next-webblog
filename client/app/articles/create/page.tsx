@@ -19,14 +19,24 @@ export default function Login() {
 
     const queryCreateArticle = async () => {
         try {
-            const query = await fetch('http://localhost:3001/articles/create', {
-                method: 'POST',
-                body: JSON.stringify({ title, description, image, category }),
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json',
-                },
-            });
+            const query = await fetch(
+                'http://192.168.1.28:3001/articles/create',
+                {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        title,
+                        description,
+                        image,
+                        category,
+                    }),
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem(
+                            'token'
+                        )}`,
+                        'Content-Type': 'application/json',
+                    },
+                }
+            );
             const response = await query.json();
             if (!response.error) {
                 push('/');

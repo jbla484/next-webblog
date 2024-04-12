@@ -29,7 +29,7 @@ function Register() {
         }
 
         try {
-            const query = await fetch('http://localhost:3001/register', {
+            const query = await fetch('http://192.168.1.28:3001/register', {
                 method: 'POST',
                 body: JSON.stringify({ fullname, email, password }),
                 headers: { 'Content-Type': 'application/json' },
