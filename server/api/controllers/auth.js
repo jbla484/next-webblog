@@ -14,7 +14,7 @@ export const authenticateToken = (req, res, next) => {
     const token = authenticationHeader && authenticationHeader.split(' ')[1];
 
     // no token, user must login
-    if (token == null) return res.send({ error: 'User must login' });
+    if (token == 'null') return res.send({ error: 'User must login' });
 
     jwt.verify(token, process.env.JWT_TOKEN_SECRET, (error, user) => {
         // token is invalid
@@ -32,7 +32,7 @@ export const checkToken = (req, res, next) => {
 
     // null token, user is a guest
     if (token === 'null') {
-        console.log('no token, user is a guest');
+        // console.log('no token, user is a guest');
         return next();
     }
 
@@ -40,7 +40,9 @@ export const checkToken = (req, res, next) => {
         // token is invalid
         if (error) return res.send({ error: 'User login timed out' });
 
-        req.user = user;
+        // console.log(req);
+
+        // req.user = user;
         next();
     });
 };
@@ -71,6 +73,7 @@ export const userLogin = async (req, res) => {
         // generate the jwt access token
         const accessToken = generateAccessToken({
             authorid: user._id,
+            email,
         });
 
         // return the jwt and id to the client

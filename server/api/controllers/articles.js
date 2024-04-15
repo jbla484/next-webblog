@@ -1,5 +1,6 @@
 import UserModel from '../../models/Users.js';
 import ArticleModel from '../../models/Articles.js';
+import CommentModel from '../../models/Comments.js';
 
 // Create (C)
 export const createArticle = async (req, res) => {
@@ -7,7 +8,7 @@ export const createArticle = async (req, res) => {
     const { title, description, image, category } = req.body;
 
     // pull the email and author from the middleware jwt function
-    const { email, author } = req.user;
+    const { email } = req.user;
 
     try {
         // get user object to save article reference
@@ -18,7 +19,7 @@ export const createArticle = async (req, res) => {
 
         // Create an article object via the corresponding model
         const article = new ArticleModel({
-            author,
+            author: user.fullname,
             authorid: user._id,
             title,
             description,
@@ -70,11 +71,11 @@ export const updateArticle = async (req, res) => {
             return res.send({ error: 'No article exists with that id' });
         }
 
-        console.log('new fields:');
-        console.log(title, description, image, category);
+        // console.log('new fields:');
+        // console.log(title, description, image, category);
 
-        console.log('article:');
-        console.log(article);
+        // console.log('article:');
+        // console.log(article);
 
         // update the article
         if (title) article.title = title;
@@ -85,8 +86,8 @@ export const updateArticle = async (req, res) => {
         // save the article object into the database
         await article.save();
 
-        console.log('updated article:');
-        console.log(article);
+        // console.log('updated article:');
+        // console.log(article);
 
         // Return a success message to the user
         return res.json(/*{ msg: 'Article successfully updated' }*/ article);
@@ -166,11 +167,11 @@ export const getCategories = async (req, res) => {
     try {
         // pull the article id from the request object using next js's dynamic routing
         var category = req.params.category;
-        console.log(category);
+        // console.log(category);
 
         // get all articles from the database with the category
         let articles = await ArticleModel.find({ category });
-        console.log(articles);
+        // console.log(articles);
 
         // return the articles to the client
         return res.json(articles);
@@ -182,17 +183,11 @@ export const getCategories = async (req, res) => {
 
 // Sub-article objects
 export const addComment = async (req, res) => {
-    let guest = false;
-
     // pull the articleid, authorid, description from the request object
-    const { articleid, description } = req.body;
+    const { articleid, description, author, authorid } = req.body;
 
-    if (req.user) {
-        // pull the author from the middleware jwt function if the user isnt a guest
-        const { author, authorid } = req.user;
-    } else {
-        guest = true;
-    }
+    //     // pull the author from the middleware jwt function if the user isnt a guest
+    //     const { author, authorid } = req.user;
 
     try {
         // get user object to save article reference
@@ -201,28 +196,27 @@ export const addComment = async (req, res) => {
             return res.send({ error: 'Could not find article with that id' });
         }
 
-        if (!guest) {
-            // get user object to save article reference
-            let user = await UserModel.findOne({ _id: authorid });
-            if (!user) {
-                return res.send({ error: 'Could not find user with that id' });
-            }
-            console.log(user);
+        // get user object to save article reference
+        let user = await UserModel.findOne({ _id: authorid });
+        if (!user) {
+            return res.send({ error: 'Could not find user with that id' });
         }
 
-        if (guest) {
-            article.comments.push({
-                description,
-            });
-        } else {
-            article.comments.push({
-                author,
-                authorid,
-                description,
-            });
-        }
+        // create comment object
+        let comment = new CommentModel({
+            articleid,
+            author,
+            authorid,
+            avatar: user.avatar,
+            description,
+        });
 
-        // TODO: need to add a default picture to guest comments
+        // insert the user object into the database
+        await comment.save();
+
+        article.comments.push({
+            commentid: comment._id,
+        });
 
         // insert the article object into the database
         await article.save();
@@ -231,8 +225,138 @@ export const addComment = async (req, res) => {
         // user.articles.push(article._id);
         // await user.save();
 
-        // Return a success message to the user
-        return res.json(article.comments);
+        let comments = [];
+
+        await Promise.all(
+            article.comments.map(async (comment) => {
+                let commentObject = await CommentModel.findOne({
+                    _id: comment.commentid,
+                });
+                if (!commentObject) {
+                    return res.send({
+                        error: 'Could not find comment with that id',
+                    });
+                }
+                comments.push(commentObject);
+            })
+        );
+
+        return res.json(comments);
+    } catch (err) {
+        // Return an error message to the user
+        return res.send({ error: err.message });
+    }
+};
+
+export const likeComment = async (req, res) => {
+    const { authorid, commentid } = req.body;
+
+    try {
+        let user = await UserModel.findOne({ _id: authorid });
+        if (!user) {
+            return res.send({ error: 'Could not find user with that id' });
+        }
+
+        let comment = await CommentModel.findOne({ _id: commentid });
+        if (!comment) {
+            return res.send({ error: 'Could not find comment with that id' });
+        }
+
+        let userFound = comment.likes.find(
+            (comment) => comment.authorid.toString() === authorid
+        );
+
+        if (userFound === undefined) {
+            comment.likes.push({ authorid });
+            await comment.save();
+        }
+
+        userFound = comment.dislikes.find(
+            (comment) => comment.authorid.toString() === authorid
+        );
+
+        if (userFound !== undefined) {
+            comment.dislikes = comment.dislikes.filter(
+                (comment) => comment.authorid.toString() !== authorid
+            );
+            await comment.save();
+        }
+
+        return res.json(comment);
+    } catch (err) {
+        // Return an error message to the user
+        return res.send({ error: err.message });
+    }
+};
+
+export const dislikeComment = async (req, res) => {
+    const { authorid, commentid } = req.body;
+
+    try {
+        let user = await UserModel.findOne({ _id: authorid });
+        if (!user) {
+            return res.send({ error: 'Could not find user with that id' });
+        }
+
+        let comment = await CommentModel.findOne({ _id: commentid });
+        if (!comment) {
+            return res.send({ error: 'Could not find comment with that id' });
+        }
+
+        let userFound = comment.likes.find(
+            (comment) => comment.authorid.toString() === authorid
+        );
+
+        if (userFound !== undefined) {
+            comment.likes = comment.likes.filter(
+                (comment) => comment.authorid.toString() !== authorid
+            );
+            await comment.save();
+        }
+
+        userFound = comment.dislikes.find(
+            (comment) => comment.authorid.toString() === authorid
+        );
+
+        if (userFound === undefined) {
+            comment.dislikes.push({ authorid });
+            await comment.save();
+        }
+
+        return res.json(comment);
+    } catch (err) {
+        // Return an error message to the user
+        return res.send({ error: err.message });
+    }
+};
+
+export const getComments = async (req, res) => {
+    var articleid = req.params.id;
+
+    try {
+        // get user object to save article reference
+        let article = await ArticleModel.findOne({ _id: articleid });
+        if (!article) {
+            return res.send({ error: 'Could not find article with that id' });
+        }
+
+        let comments = [];
+
+        await Promise.all(
+            article.comments.map(async (comment) => {
+                let commentObject = await CommentModel.findOne({
+                    _id: comment.commentid,
+                });
+                if (!commentObject) {
+                    return res.send({
+                        error: 'Could not find comment with that id',
+                    });
+                }
+                comments.push(commentObject);
+            })
+        );
+
+        return res.json(comments);
     } catch (err) {
         // Return an error message to the user
         return res.send({ error: err.message });
@@ -247,7 +371,7 @@ export const favoriteArticle = async (req, res) => {
     // pull the authorid from the middleware jwt function
     const { authorid } = req.user;
 
-    console.log(articleid, authorid);
+    // console.log(articleid, authorid);
 
     try {
         // get user object to save article reference
@@ -283,7 +407,7 @@ export const favoriteArticle = async (req, res) => {
 export const getArticlesByAuthor = async (req, res) => {
     // pull the article id from the request object using next js's dynamic routing
     var { authorid } = req.params;
-    console.log(authorid);
+    // console.log(authorid);
 
     try {
         // search the database on that id, return errore if not found

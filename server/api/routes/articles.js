@@ -13,6 +13,9 @@ import {
     addComment,
     favoriteArticle,
     getArticlesByAuthor,
+    getComments,
+    likeComment,
+    dislikeComment,
 } from '../controllers/articles.js';
 import { authenticateToken, checkToken } from '../controllers/auth.js';
 
@@ -26,6 +29,15 @@ router.get('/trending', getTrending);
 
 // /articles/comments/add
 router.post('/comments/add', checkToken, addComment);
+
+// /articles/comments/like
+router.post('/comments/like', checkToken, likeComment);
+
+// /articles/comments/dislike
+router.post('/comments/dislike', checkToken, dislikeComment);
+
+// /articles/:articleid/comments
+router.get('/:id/comments', getComments);
 
 // /articles/favorite
 router.post('/favorite', authenticateToken, favoriteArticle);

@@ -11,6 +11,13 @@ import { IoCalendarOutline } from 'react-icons/io5';
 import { MdFavoriteBorder } from 'react-icons/md';
 import { MdFavorite } from 'react-icons/md';
 
+import { PiThumbsUpLight } from 'react-icons/pi';
+import { PiThumbsUpFill } from 'react-icons/pi';
+import { PiThumbsDownLight } from 'react-icons/pi';
+import { PiThumbsDownFill } from 'react-icons/pi';
+
+import { GoSquareFill } from 'react-icons/go';
+
 import { UserContext } from '@/components/UserContext';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -23,14 +30,19 @@ interface Params {
 }
 
 interface Comment {
+    _id: string;
     author: string;
+    avatar: string;
     authorid: string;
     description: string;
     created: Date;
+    likes: Likes[];
+    dislikes: Likes[];
 }
 
 interface Likes {
-    author: string;
+    // author: string;
+    authorid: string;
 }
 
 interface Article {
@@ -53,6 +65,7 @@ interface Favorites {
 }
 
 interface Author {
+    _id: string;
     articles: Articles[];
     avatar: string;
     created: Date;
@@ -80,7 +93,21 @@ export default function Article({ params }: { params: Params }) {
         category: '',
     });
 
+    const [comments, setComments] = useState<Array<Comment>>([
+        {
+            _id: '',
+            author: '',
+            avatar: '',
+            authorid: '',
+            description: '',
+            created: new Date(),
+            likes: [],
+            dislikes: [],
+        },
+    ]);
+
     const [author, setAuthor] = useState<Author>({
+        _id: '',
         articles: [],
         avatar: '',
         created: new Date(),
@@ -90,6 +117,10 @@ export default function Article({ params }: { params: Params }) {
     });
 
     const [comment, setComment] = useState<string>('');
+    const [reply, setReply] = useState<string>('');
+    const [replyInput, setReplyInput] = useState<string>('');
+
+    function showReply() {}
 
     // TODO: get users gravatar
     async function addComment() {
@@ -97,7 +128,12 @@ export default function Article({ params }: { params: Params }) {
             'http://192.168.1.28:3001/articles/comments/add',
             {
                 method: 'POST',
-                body: JSON.stringify({ articleid, description: comment }),
+                body: JSON.stringify({
+                    articleid,
+                    description: comment,
+                    authorid: author._id,
+                    author: author.fullname,
+                }),
                 headers: {
                     Authorization: `Bearer ${sessionStorage.getItem('token')}`,
                     'Content-Type': 'application/json',
@@ -105,9 +141,58 @@ export default function Article({ params }: { params: Params }) {
             }
         );
         const response = await query.json();
-        console.log(response);
 
-        // TODO: update comments on response if no error
+        // TODO: doesnt update total comment count
+        setComment('');
+        setComments(response);
+    }
+
+    async function likeComment(commentid: string) {
+        const query = await fetch(
+            'http://192.168.1.28:3001/articles/comments/like',
+            {
+                method: 'POST',
+                body: JSON.stringify({
+                    authorid: author._id,
+                    commentid,
+                }),
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        const response = await query.json();
+
+        let newComments = comments.map((comment) => {
+            if (comment._id === response._id) return response;
+            else return comment;
+        });
+        setComments(newComments);
+    }
+
+    async function dislikeComment(commentid: string) {
+        const query = await fetch(
+            'http://192.168.1.28:3001/articles/comments/dislike',
+            {
+                method: 'POST',
+                body: JSON.stringify({
+                    authorid: author._id,
+                    commentid,
+                }),
+                headers: {
+                    Authorization: `Bearer ${sessionStorage.getItem('token')}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        const response = await query.json();
+
+        let newComments = comments.map((comment) => {
+            if (comment._id === response._id) return response;
+            else return comment;
+        });
+        setComments(newComments);
     }
 
     async function favoriteArticle() {
@@ -130,7 +215,7 @@ export default function Article({ params }: { params: Params }) {
         if (!response.error) {
             setFavorited(true);
         } else {
-            // setError(response.error);
+            //setError(response.error);
         }
     }
 
@@ -152,7 +237,7 @@ export default function Article({ params }: { params: Params }) {
             }
         );
         const response = await query.json();
-        console.log(response);
+        // console.log(response);
         if (!response.error) {
             setFavorited(false);
         } else {
@@ -168,6 +253,7 @@ export default function Article({ params }: { params: Params }) {
                     `http://192.168.1.28:3001/articles/${articleid}`
                 );
                 const response = await query.json();
+
                 setArticle(response[0]);
             } catch (error) {
                 console.error(error);
@@ -176,19 +262,37 @@ export default function Article({ params }: { params: Params }) {
         getArticle();
 
         const getUserInfo = async () => {
-            const query = await fetch(
-                `http://192.168.1.28:3001/authors/${sessionStorage.getItem(
-                    'authorid'
-                )}`
-            );
+            try {
+                const query = await fetch(
+                    `http://192.168.1.28:3001/authors/${sessionStorage.getItem(
+                        'authorid'
+                    )}`
+                );
 
-            const response = await query.json();
-            if (!response.error) {
-                setGotUser(true);
-                setAuthor(response[0]);
+                const response = await query.json();
+                if (!response.error) {
+                    setGotUser(true);
+                    setAuthor(response[0]);
+                }
+            } catch (error) {
+                console.error(error);
             }
         };
         getUserInfo();
+
+        const getComments = async () => {
+            try {
+                const query = await fetch(
+                    `http://192.168.1.28:3001/articles/${articleid}/comments`
+                );
+
+                const response = await query.json();
+                setComments(response);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+        getComments();
     }, [articleid]);
 
     // render article info
@@ -259,9 +363,9 @@ export default function Article({ params }: { params: Params }) {
                 <div className='flex items-center mt-4 mb-2'>
                     <h1 className='text-2xl font-bold'>Conversation</h1>
                     <p className='pl-2'>
-                        {article.comments.length}{' '}
-                        {article.comments.length > 1 ||
-                        article.comments.length == 0
+                        {/* article.comments.length */}
+                        {comments.length}{' '}
+                        {comments.length > 1 || comments.length == 0
                             ? 'Comments'
                             : 'Comment'}
                     </p>
@@ -331,41 +435,142 @@ export default function Article({ params }: { params: Params }) {
                     </p>
                 </div>
 
-                {/* TODO: update user name, date, and profile picture and reply to profiles comment */}
+                {/* TODO: reply to profiles comment */}
                 <div>
-                    {article.comments.map((comment: Comment, i: number) => {
-                        console.log(comment.authorid);
+                    {comments.map((comment: Comment, i: number) => {
                         return (
                             <div key={uuidv4()}>
                                 <div
                                     key={i}
                                     className='flex'
                                 >
-                                    <div className='inline-block flex align-middle'>
+                                    <div className='inline-block flex h-12'>
                                         <img
                                             src={comment.avatar}
-                                            width={40}
-                                            height={40}
+                                            width={30}
+                                            height={30}
                                             alt='gravatar image'
-                                            className='my-2 rounded-full'
+                                            className='my-2 rounded-full mr-2'
                                         />
                                     </div>
-                                    <div className='inline-block'>
+                                    <div className='block w-full'>
                                         <div>
                                             <b>{comment.author}</b>
                                         </div>
                                         <div className='text-sm text-gray-500'>
                                             {new Date(
-                                                article.created
+                                                comment.created
                                             ).toLocaleDateString()}
                                         </div>
                                         <div>{comment.description}</div>
-                                        <button
-                                            type='button'
-                                            className='text-sm text-gray-500'
-                                        >
-                                            Reply
-                                        </button>
+
+                                        <div className='flex items-center'>
+                                            <button
+                                                type='button'
+                                                className='text-sm text-gray-500'
+                                                onClick={(e) => {
+                                                    if (
+                                                        replyInput ==
+                                                        comment._id
+                                                    )
+                                                        setReplyInput('');
+                                                    else
+                                                        setReplyInput(
+                                                            comment._id
+                                                        );
+                                                }}
+                                            >
+                                                Reply
+                                            </button>
+
+                                            <GoSquareFill
+                                                size={8}
+                                                className='cursor-pointer text-gray-300 mx-2'
+                                            />
+
+                                            {comment.likes.find(
+                                                (comment) =>
+                                                    comment.authorid ===
+                                                    author._id
+                                            ) ? (
+                                                <PiThumbsUpFill
+                                                    size={19}
+                                                    className='cursor-pointer text-gray-500'
+                                                    onClick={(e) =>
+                                                        likeComment(comment._id)
+                                                    }
+                                                />
+                                            ) : (
+                                                <PiThumbsUpLight
+                                                    size={19}
+                                                    className='cursor-pointer text-gray-500'
+                                                    onClick={(e) =>
+                                                        likeComment(comment._id)
+                                                    }
+                                                />
+                                            )}
+                                            {comment.likes.length > 0 && (
+                                                <div className='cursor-pointer text-gray-500 ml-1'>
+                                                    {comment.likes.length}
+                                                </div>
+                                            )}
+
+                                            {comment.dislikes.find(
+                                                (comment) =>
+                                                    comment.authorid ===
+                                                    author._id
+                                            ) ? (
+                                                <PiThumbsDownFill
+                                                    size={19}
+                                                    className='cursor-pointer text-gray-500 ml-2'
+                                                    onClick={(e) =>
+                                                        dislikeComment(
+                                                            comment._id
+                                                        )
+                                                    }
+                                                />
+                                            ) : (
+                                                <PiThumbsDownLight
+                                                    size={19}
+                                                    className='cursor-pointer text-gray-500 ml-2'
+                                                    onClick={(e) =>
+                                                        dislikeComment(
+                                                            comment._id
+                                                        )
+                                                    }
+                                                />
+                                            )}
+                                            {comment.dislikes.length > 0 && (
+                                                <div className='cursor-pointer text-gray-500 ml-1'>
+                                                    {comment.dislikes.length}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {replyInput === comment._id && (
+                                            <input
+                                                type='text'
+                                                placeholder={`Reply to ${comment.author}`}
+                                                className='border-solid border-2 bg-transparent rounded-md p-2 my-2 block w-full'
+                                                onChange={(e) => {
+                                                    setReply(e.target.value);
+                                                }}
+                                                value={reply}
+                                            ></input>
+                                        )}
+
+                                        {/* TODO: only one character and then a bug? */}
+                                        {replyInput === comment._id &&
+                                            reply && (
+                                                <div className='align text-right'>
+                                                    <button
+                                                        className='bg-green-600 text-white px-4 py-1 rounded-md'
+                                                        onClick={addComment}
+                                                    >
+                                                        Post
+                                                    </button>
+                                                </div>
+                                            )}
                                     </div>
                                 </div>
                                 <hr className='my-2'></hr>

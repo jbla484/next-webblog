@@ -2,7 +2,11 @@
 import mongoose from 'mongoose';
 
 // Create a schema for the user collection
-const ArticleSchema = new mongoose.Schema({
+const CommentSchema = new mongoose.Schema({
+    articleid: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'article',
+    },
     author: {
         type: String,
         required: true,
@@ -10,22 +14,11 @@ const ArticleSchema = new mongoose.Schema({
     authorid: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'user',
-        required: true,
     },
-    image: {
-        // type: Buffer,
+    avatar: {
         type: String,
-        required: true,
-    },
-    title: {
-        type: String,
-        required: true,
     },
     description: {
-        type: String,
-        required: true,
-    },
-    category: {
         type: String,
         required: true,
     },
@@ -33,7 +26,23 @@ const ArticleSchema = new mongoose.Schema({
         type: Date,
         default: new Date(),
     },
-    comments: [
+    likes: [
+        {
+            authorid: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'user',
+            },
+        },
+    ],
+    dislikes: [
+        {
+            authorid: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'user',
+            },
+        },
+    ],
+    replies: [
         {
             commentid: {
                 type: mongoose.Schema.Types.ObjectId,
@@ -44,7 +53,7 @@ const ArticleSchema = new mongoose.Schema({
 });
 
 // Create a model out of the schema (will automatically be created)
-const ArticleModel = mongoose.model('articles', ArticleSchema);
+const CommentModel = mongoose.model('comments', CommentSchema);
 
 // Export to outside of the file
-export default ArticleModel;
+export default CommentModel;

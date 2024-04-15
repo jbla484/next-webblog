@@ -30,7 +30,7 @@ export default function Login() {
                         category,
                     }),
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem(
+                        Authorization: `Bearer ${sessionStorage.getItem(
                             'token'
                         )}`,
                         'Content-Type': 'application/json',

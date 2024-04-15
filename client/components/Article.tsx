@@ -40,13 +40,13 @@ export default function Article(article: Article) {
                             width={1000}
                             height={1000}
                             alt='blog post'
-                            className='rounded-md'
+                            className='rounded-md cursor-pointer'
                             onClick={() => {
                                 push(`/articles/${article.id}`);
                             }}
                         />
                         <div
-                            className='flex flex-row text-green-500 mt-2'
+                            className='flex flex-row text-green-500 mt-2 cursor-pointer'
                             onClick={(e) => {
                                 push(
                                     `/articles/categories/${article.category}`
@@ -61,7 +61,7 @@ export default function Article(article: Article) {
                         </div>
 
                         <h1
-                            className='text-2xl'
+                            className='text-2xl cursor-pointer'
                             onClick={(e) => {
                                 push(`/articles/${article.id}`);
                             }}
@@ -69,7 +69,7 @@ export default function Article(article: Article) {
                             <b>{article.title}</b>
                         </h1>
                         <div
-                            className='flex flex-row text-gray-700 mt-1 text-xs'
+                            className='flex flex-row text-gray-700 mt-1 text-xs cursor-pointer'
                             onClick={(e) => {
                                 push(`/authors/${article.authorid}`);
                             }}
@@ -87,7 +87,7 @@ export default function Article(article: Article) {
                     <div className={classList}>
                         <div className='flex-grow'>
                             <div
-                                className='flex flex-row text-green-500 mt-2'
+                                className='flex flex-row text-green-500 mt-2 cursor-pointer'
                                 onClick={(e) => {
                                     push(
                                         `/articles/categories/${article.category}`
@@ -102,7 +102,7 @@ export default function Article(article: Article) {
                             </div>
 
                             <h1
-                                className='text-2xl'
+                                className='text-2xl cursor-pointer'
                                 onClick={(e) => {
                                     push(`/articles/${article.id}`);
                                 }}
@@ -110,7 +110,7 @@ export default function Article(article: Article) {
                                 <b>{article.title}</b>
                             </h1>
                             <div
-                                className='flex flex-row text-gray-700 mt-1 text-xs'
+                                className='flex flex-row text-gray-700 mt-1 text-xs cursor-pointer'
                                 onClick={(e) => {
                                     push(`/authors/${article.authorid}`);
                                 }}
@@ -131,7 +131,7 @@ export default function Article(article: Article) {
                             width={100}
                             height={100}
                             alt='blog post'
-                            className=' rounded-md'
+                            className=' rounded-md cursor-pointer'
                             onClick={(e) => {
                                 push(`/articles/${article.id}`);
                             }}
